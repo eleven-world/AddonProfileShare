@@ -1,0 +1,22 @@
+## Interface: 80300
+## Title: AddonProfileShare
+## Notes: Share addon profiles by strings
+## Title-zhCN: AddonProfileShare 插件配置分享
+## Notes-zhCN: 帮助你与他人使用字符串分享插件配置
+## Author: Eleven [陽光-死亡之翼]
+## Version: 1.0.0
+## DefaultState: Enabled
+## SavedVariables: AddonProfileShare_DB
+## X-Compatible: 0.1.1
+## X-Curse-Project-ID: 384300
+
+embeds.xml
+Core.lua
+
+Default.lua
+AddonDB.lua
+Rule.lua
+Import.lua
+Export.lua
+Backup.lua
+Instruction.lua
