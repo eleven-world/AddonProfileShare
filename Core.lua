@@ -1,16 +1,12 @@
---[[
-1. Ace规则更改
-2. 选择插件规则
-3. 说明书
-]]
 local AddonProfileShare = LibStub("AceAddon-3.0"):NewAddon("AddonProfileShare")
---AddonProfileShare = LibStub("AceAddon-3.0"):NewAddon("AddonProfileShare")
+--APS = AddonProfileShare
 local Core = AddonProfileShare
-APS = AddonProfileShare
+
 Core.addon_name = "AddonProfileShare"
 Core.compatible = GetAddOnMetadata(Core.addon_name, "X-Compatible")
 Core.version = GetAddOnMetadata(Core.addon_name, "Version")
-
+Core.player_name = UnitName("player")
+Core.player_server = GetRealmName()
 
 
 local AceSerializer = LibStub:GetLibrary("AceSerializer-3.0")
@@ -31,7 +27,6 @@ function Core:OnInitialize()
 	self:OptionsInit()
 	self:ProcessQuene_Init()
 	self.loading = false
-	--print("AddonProfileShare 已载入")
 end
 
 
@@ -188,7 +183,7 @@ function Core:BulkPasteWindow(paste_mod,paste_target,close_callback,title,status
 		self:SetScript('OnUpdate', nil)
 		local pasted = strtrim(table.concat(textBuffer))
 		input.editBox:ClearFocus();
-		-- pasted = pasted:match( "^%s*(.-)%s*$" );
+		pasted = pasted:match( "^%s*(.-)%s*$" );
 		if (#pasted > 20) then
 			paste_mod[paste_target] = pasted
 			-- WeakAuras.Import(pasted);
@@ -216,24 +211,6 @@ function Core:BulkPasteWindow(paste_mod,paste_target,close_callback,title,status
 end
 
 
-
---  -- tcopy: recursively copy contents of one table to another
--- function Core:deepCopy(orig)
---     local orig_type = type(orig)
---     local copy
---     if orig_type == 'table' then
---         copy = {}
---         for orig_key, orig_value in pairs(orig) do
---             copy[orig_key] = self:deepCopy(orig_value)
---         end
---         --setmetatable(copy, self:deepCopy(getmetatable(orig)))
---     elseif (orig_type == "function") or (orig_type == "userdata")  then
---     	copy = nil
---     else -- number, string, boolean, etc
---         copy = orig
---     end
---     return copy
--- end
 
 function Core:deepCopy(orig)
 	local function copy3(obj, seen)

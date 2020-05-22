@@ -284,8 +284,8 @@ function mod:ExportInit()
 	self.export.name = self.export_name or "未命名档案"
 	self.export.description = self.export_description or ""
 	self.export.create_time = date("%Y-%m-%d %H:%M:%S",GetServerTime())
-	self.export.player_name = UnitName("player")
-	self.export.player_server = GetRealmName()
+	self.export.player_name = Core.player_name
+	self.export.player_server = Core.player_server
 	self.export.data = {}
 end
 
@@ -332,7 +332,15 @@ function mod:ExportAceProfile(addon_name)
 	local export_db = {}
 	export_db.profile_name = profile_name
 	export_db.profile = Core:deepCopy(db.profile)
-	export_db.global = Core:deepCopy(db.global)
+	export_db.char = Core:deepCopy(db.char)
+
+	local sv = db.sv
+	local except = {"namespaces","profiles","profileKeys","char"}
+	for k,v in pairs(sv) do
+		if not tContains(except, k) then
+			export_db[k] = Core:deepCopy(v)
+		end
+	end
 
 	local namespaces = db.sv.namespaces
 	if namespaces then 
@@ -342,7 +350,14 @@ function mod:ExportAceProfile(addon_name)
 			if ns_db then
 				export_db.namespaces[ns] = {}
 				export_db.namespaces[ns].profile = Core:deepCopy(ns_db.profile)
-				export_db.namespaces[ns].global = Core:deepCopy(ns_db.global)
+				export_db.namespaces[ns].char = Core:deepCopy(ns_db.char)
+
+				local sv = ns_db.sv
+				for k,v in pairs(sv) do
+					if not tContains(except, k) then
+						export_db.namespaces[ns][k] = Core:deepCopy(v)
+					end
+				end
 			end
 		end
 	end
@@ -363,8 +378,8 @@ function mod:GetProfileFromRule(addon_name, rule)
 	local db_names = Core.AddonDB.addon_db[addon_name]
 	if not (db_names and #db_names > 0) then return nil end
 	local addon_name = addon_name
-	local player_name = UnitName("player")
-	local player_server = GetRealmName()
+	local player_name = Core.player_name
+	local player_server = Core.player_server
 	local param_dict = {
 		["$name$"] = player_name,
 		["$server$"] = player_server,

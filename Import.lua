@@ -217,7 +217,7 @@ function mod:StringToData_ChangeName(profile_string)
 	if not decode_string then return nil end
     local decompressed_string = LibDeflate:DecompressDeflate(decode_string)
 	if not decompressed_string then return nil end
-	decompressed_string = self:StringChangeName(decompressed_string,self.import.player_name,self.import.player_server,UnitName("player"),GetRealmName())
+	decompressed_string = self:StringChangeName(decompressed_string,self.import.player_name,self.import.player_server,Core.player_name,Core.player_server)
 	local success,addon_data =  AceSerializer:Deserialize(decompressed_string)
 	if success and type(addon_data) == "table" then 
 		return addon_data
@@ -264,24 +264,43 @@ function mod:ApplyAceProfile(addon_name,import_db)
 	local db = Core.AddonDB:GetAceDB(addon_name)
 	if (not db) or (not import_db) then return nil end
 
+	local profile_key = Core.player_name .. " - " .. Core.player_server
+
+	local except = {"namespaces","profiles","profileKeys","char","profile","profile_name"}
+
 	local profile_name = "APS_Import"
 	if not db.profiles then db.profiles = {} end
 	db.profiles[profile_name] = import_db.profile
-	db.sv.global = import_db.global
+	if import_db.char then
+		db.sv.char = db.sv.char or {}
+		db.sv.char[profile_key] = import_db.char
+	end
+
+	for k,v in pairs(import_db) do
+		if not tContains(except, k) then
+			db.sv[k] = v
+		end
+	end
 
 	local namespaces = import_db.namespaces
-	IMPORT_DB = import_db.namespaces
 	if namespaces then 
 		for ns, import_ns_db in pairs(namespaces) do
 			db.sv.namespaces = db.sv.namespaces or {}
 			db.sv.namespaces[ns] = db.sv.namespaces[ns] or {}
 			db.sv.namespaces[ns].profiles = db.sv.namespaces[ns].profiles or {}
 			db.sv.namespaces[ns].profiles[profile_name] = import_ns_db.profile
-			db.sv.namespaces[ns].global = import_ns_db.global
+			if import_ns_db.char then
+				db.sv.namespaces[ns].char = db.sv.namespaces[ns].char or {}
+				db.sv.namespaces[ns].char[profile_key] = import_ns_db.char
+			end
+			for k,v in pairs(import_ns_db) do
+				if not tContains(except, k) then
+					db.sv.namespaces[ns][k] = v
+				end
+			end
 		end
 	end
 
-	local profile_key = UnitName("player") .. " - " .. GetRealmName()
 	db.sv.profileKeys[profile_key] = profile_name
 end
 
@@ -290,8 +309,8 @@ function mod:ApplyRuleProfile(addon_name,data)
 
 	--data = {profile_name = {profile_name},	profile = {profile},	name_rule = name_rule}
 	local addon_name = addon_name
-	local player_name = UnitName("player")
-	local player_server = GetRealmName()
+	local player_name = Core.player_name
+	local player_server = Core.player_server
 	local param_dict = {
 		["$name$"] = player_name,
 		["$server$"] = player_server,
