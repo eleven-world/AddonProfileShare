@@ -1,4 +1,8 @@
-
+--[[
+1. Ace规则更改
+2. 选择插件规则
+3. 说明书
+]]
 local AddonProfileShare = LibStub("AceAddon-3.0"):NewAddon("AddonProfileShare")
 --AddonProfileShare = LibStub("AceAddon-3.0"):NewAddon("AddonProfileShare")
 local Core = AddonProfileShare
@@ -15,8 +19,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 
-local _
-
+local _,i,j,k,v
 
 
 Core.db_defaults = {}

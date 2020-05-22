@@ -63,6 +63,7 @@ mod.default_rule_list = {
 		profile_path = {
 			"MEETINGSTONE_CHARACTER_DB/profiles/$profile$", -- [1]
 		},
+		name_rule = "$name$ - $server$",
 	},
 	["Details"] = {
 		profile_name = "_detalhes_database/active_profile",

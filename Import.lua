@@ -178,7 +178,6 @@ function mod:ApplyProfile(addon_name, data)
 	if data.type == "rule" then
 		self:ApplyRuleProfile(addon_name,Core:StringToData(data.data_string))
 	elseif data.type == "acedb" then
-		IMPORT_DB_STRING = data.data_string
 		self:ApplyAceProfile(addon_name,Core:StringToData(data.data_string))
 	elseif data.type == "normal" then
 		for db_name,profile_string in pairs(data.data_string) do

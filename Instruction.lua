@@ -40,13 +40,34 @@ local config_instruction = [[|cFFFF0000选项配置请在阅读说明后谨慎�
 ]]
 
 
+local rule_instruction = [[规则说明：
+规则内容分为两种类型，路径和值
+路径支持三种替换方式，值只支持变量替换
+
+替换方式：
+1. 变量替换：$name$-当前角色名 $server$-当前角色服务器名 $addon$-插件名 $profile$-档案名
+2. 多选：[aaa|bbb|ccc]表示字段为aaa,bbb,ccc中任意一个  [^aaa|bbb]表示字段不是aaa和bbb
+3. lua字符串匹配 {pattern} 按lua字符串匹配pattern(会自动在头尾加^$，不支持字符/{}:，不支持非英文字符)
+某一字段单独使用其中一种替换方式，不能混用
 
 
-
-
-
-
-
+|cffffd100插件名称：|r
+准确的插件名称（插件文件夹名），不支持任何替换
+|cffffd100档案名称路径：|r
+格式示例：AddonProfileShare_DB/profileKeys/$name$ - $server$
+类型为路径，用于导入导出插件时，找到档案的名称，并用于后续根据档案名称找到档案内容
+路径不支持$profile$，找到的值会存入字典作为$profile$供其他路径使用
+|cffffd100档案路径：|r
+格式示例：AddonProfileShare_DB/[profiles|profiles]/{.*}/$profile$
+类型为路径，用于导入导出插件时，找到档案内容，可以多行表示多个位置
+|cffffd100变更键值：|r
+只在导入时有用，将指定位置的值变为设定值
+格式示例：AddonProfileShare_DB/profileKeys/$name$ - $server$:$profile$
+:前为路径，后为要变更为的值
+|cffffd100名称命名规则：|r
+只在导入时有用，导入时为该插件建立的设定档名称，默认APS_Import
+某些插件不能自定义设定档名称，则需将其命名规则填入此处，支持变量替换
+]]
 
 
 
@@ -131,6 +152,7 @@ function mod:InitOptions( ... )
 				order = 5,
 				args = {
 					operation = {type = "group",name = "说明",inline = true,order = 1,args = { main = { type = "description",fontSize = "medium", name = config_instruction}}},
+					rule = {type = "group",name = "规则说明",inline = true,order = 2,args = { main = { type = "description",fontSize = "medium", name = rule_instruction}}},
 				},
 			},
 		},
