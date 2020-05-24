@@ -98,6 +98,16 @@ function Core:SetStatusText(text)
 	f:SetStatusText(text)
 end
 
+
+function Core:Serialize(data)
+	return AceSerializer:Serialize(data)
+end
+
+function Core:Deserialize(profile_string)
+	local success, data =  AceSerializer:Deserialize(profile_string)
+	if success then return data else return nil end	
+end
+
 function Core:DataToString(data)
 	local data_string = AceSerializer:Serialize(data)
 	local compressed_string = LibDeflate:CompressDeflate(data_string)
@@ -111,10 +121,7 @@ function Core:StringToData(profile_string)
     local decompressed_string = LibDeflate:DecompressDeflate(decode_string)
 	if not decompressed_string then return nil end
 	local success,addon_data =  AceSerializer:Deserialize(decompressed_string)
-	if success and type(addon_data) == "table" then 
-		return addon_data
-	end
-	return nil
+	if success then return addon_data else return nil end
 end
 
 
@@ -132,14 +139,13 @@ function Core:ProcessQuene_Process()
 	tremove(self.process_quene)
 	local sleep_time,mod,process_func,args = unpack(process)
 	local success, res1, res2 = pcall(mod[process_func],mod,unpack(args))
-	-- if success then
-	-- 	print(process_func .. --[[(select(4,unpack(process)) or "") ..]] "success!")
-	-- 	--print(unpack(args))
-	-- else
-	-- 	print(process_func .. --[[(select(4,unpack(process)) or "") ..]]"failed!")
-	-- 	print(res1, res2)
-	-- 	--print(unpack(args))
-	-- end
+	if success then
+		--print(process_func .. " success! ", unpack(args))
+		--print(unpack(args))
+	else
+		print(process_func .. " failed! ", unpack(args))
+		print(res1, res2)
+	end
 	self:ProcessQuene_Sleep(sleep_time)
 end
 
@@ -212,8 +218,37 @@ end
 
 
 
+-- function Core:deepCopy(orig)
+-- 	local function copy3(obj, seen)
+-- 		-- Handle non-tables and previously-seen tables.
+-- 		if type(obj) ~= 'table' then 
+-- 			if type(obj) == "function" or type(obj) == "userdata" then
+-- 				return nil
+-- 			else
+-- 				return obj
+-- 			end
+-- 			--return obj
+-- 		end
+-- 		if seen and seen[obj] then 
+-- 			return nil
+-- 			--return seen[obj]
+-- 		end
+
+-- 		-- New table; mark it as seen an copy recursively.
+-- 		local s = seen or {}
+-- 		local res = {}
+-- 		s[obj] = res
+-- 		for k, v in next, obj do res[copy3(k, s)] = copy3(v, s) end
+-- 		return setmetatable(res, getmetatable(obj))
+-- 	end
+-- 	return copy3(orig)
+-- end
+
+
+
+
 function Core:deepCopy(orig)
-	local function copy3(obj, seen)
+	local function copy(obj, seen)
 		-- Handle non-tables and previously-seen tables.
 		if type(obj) ~= 'table' then 
 			if type(obj) == "function" or type(obj) == "userdata" then
@@ -221,22 +256,25 @@ function Core:deepCopy(orig)
 			else
 				return obj
 			end
-			--return obj
 		end
 		if seen and seen[obj] then 
 			return nil
-			--return seen[obj]
 		end
 
 		-- New table; mark it as seen an copy recursively.
 		local s = seen or {}
 		local res = {}
-		s[obj] = res
-		for k, v in next, obj do res[copy3(k, s)] = copy3(v, s) end
-		return setmetatable(res, getmetatable(obj))
+		s[obj] = true
+		for k, v in pairs(obj) do 
+			res[k] = copy(v, s)
+		end
+		return res
 	end
-	return copy3(orig)
+	return copy(orig)
 end
+
+
+
 
 
 function Core:tableMerge(t1, t2)

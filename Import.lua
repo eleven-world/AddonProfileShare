@@ -166,26 +166,26 @@ function mod:ApplyImportProfile()
 	if not (self.import_status and self.import_status.addon_list and self.import and self.import.data) then return nil end
 	for addon_name, chosen in pairs(self.import_status.addon_list) do
 		if chosen and IsAddOnLoaded(addon_name) then
-			Core:ProcessQuene_Add(0.2,self,"ApplyProfile",addon_name,self.import.data[addon_name])
+			Core:ProcessQuene_Add(0.1,self,"ApplyProfile",addon_name,self.import.data[addon_name])
 		end
 	end
-	Core:ProcessQuene_Add(0.2,self,"ApplyProfileComplete")
+	Core:ProcessQuene_Add(0.1,self,"ApplyProfileComplete")
 end
 
 
 function mod:ApplyProfile(addon_name, data)
 	if (not data) or (not data.type) then return nil end
 	if data.type == "rule" then
-		self:ApplyRuleProfile(addon_name,Core:StringToData(data.data_string))
+		self:ApplyRuleProfile(addon_name,Core:Deserialize(data.data_string))
 	elseif data.type == "acedb" then
-		self:ApplyAceProfile(addon_name,Core:StringToData(data.data_string))
+		self:ApplyAceProfile(addon_name,Core:Deserialize(data.data_string))
 	elseif data.type == "normal" then
 		for db_name,profile_string in pairs(data.data_string) do
 			local profile
 			if self.change_name then
-				profile = self:StringToData_ChangeName(profile_string)
+				profile = self:Deserialize_ChangeName(profile_string)
 			else
-				profile = Core:StringToData(profile_string)
+				profile = Core:Deserialize(profile_string)
 			end
 			_G[db_name] = profile
 		end
@@ -212,17 +212,9 @@ function mod:ApplyProfileComplete()
 end
 
 
-function mod:StringToData_ChangeName(profile_string)
-	local decode_string = LibDeflate:DecodeForPrint(profile_string)
-	if not decode_string then return nil end
-    local decompressed_string = LibDeflate:DecompressDeflate(decode_string)
-	if not decompressed_string then return nil end
-	decompressed_string = self:StringChangeName(decompressed_string,self.import.player_name,self.import.player_server,Core.player_name,Core.player_server)
-	local success,addon_data =  AceSerializer:Deserialize(decompressed_string)
-	if success and type(addon_data) == "table" then 
-		return addon_data
-	end
-	return nil
+function mod:Deserialize_ChangeName(profile_string)
+	local profile_string = self:StringChangeName(profile_string,self.import.player_name,self.import.player_server,Core.player_name,Core.player_server)
+	return Core:Deserialize(profile_string)
 end
 
 
@@ -261,7 +253,7 @@ end
 
 function mod:ApplyAceProfile(addon_name,import_db)
 	
-	local db = Core.AddonDB:GetAceDB(addon_name)
+	local db = Core.AddonDB:GetAceDB(addon_name, true)
 	if (not db) or (not import_db) then return nil end
 
 	local profile_key = Core.player_name .. " - " .. Core.player_server
@@ -339,7 +331,7 @@ function mod:ApplyRuleProfile(addon_name,data)
 
 	--set value
 	if data.value_set then
-		for key, value in pairs(data.profile) do
+		for key, value in pairs(data.value_set) do
 			value = Core.Rule:GetParseString(value,param_dict)
 			self:ApplyRuleProfile_SetValue(key, param_dict, value)
 		end

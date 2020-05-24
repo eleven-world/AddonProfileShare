@@ -207,10 +207,10 @@ function mod:ExportSelectAddonProfile()
 	self:ExportInit()
 	for _,category in pairs(good_category) do
 		for addon_name,toggle in pairs(self.addon_list[category].toggle) do
-			if toggle then Core:ProcessQuene_Add(0.2,self,"ExportProfile",addon_name) end
+			if toggle then Core:ProcessQuene_Add(0.1,self,"ExportProfile",addon_name) end
 		end
 	end
-	Core:ProcessQuene_Add(0.2,self,"ExportStringGenerate")
+	Core:ProcessQuene_Add(0.1,self,"ExportStringGenerate")
 end
 
 function mod:ExportStringGenerate()
@@ -294,15 +294,15 @@ function mod:ExportProfile(addon_name)
 	category = Core.AddonDB:GetAddonCategory(addon_name)
 	if category == "rule" then
 		self.export.data[addon_name] = {type = category}
-		self.export.data[addon_name].data_string = Core:DataToString(self:ExportRuleProfile(addon_name))
+		self.export.data[addon_name].data_string = Core:Serialize(self:ExportRuleProfile(addon_name))
 	elseif category == "acedb" then
 		self.export.data[addon_name] = {type = category}
-		self.export.data[addon_name].data_string = Core:DataToString(self:ExportAceProfile(addon_name))
+		self.export.data[addon_name].data_string = Core:Serialize(self:ExportAceProfile(addon_name))
 	elseif category == "normal" then
 		self.export.data[addon_name] = {type = category,data_string = {}}
 		db_names = Core.AddonDB.addon_db[addon_name]
 		for k,db_name in pairs(db_names) do
-			self.export.data[addon_name].data_string[db_name] = Core:DataToString(Core:deepCopy(_G[db_name]))
+			self.export.data[addon_name].data_string[db_name] = Core:Serialize(Core:deepCopy(_G[db_name]))
 		end
 	end
 	if #Core.process_quene == 1 then
@@ -427,30 +427,36 @@ local function findpatterintable(value, key, path, parent, depth, param_dict, re
 		tar_list = {strsplit("|", tar)}
 		local find = tContains(tar_list,key)
 		if non then find = not find end
-		if find and depth == #path then
-			result[#result+1] = {path = parent and strjoin("/",parent,key) or key, value = value}
-		elseif type(value) == "table" then
-			for sub_key,sub_value in pairs(value) do
-				findpatterintable(sub_value, sub_key, path, parent and strjoin("/",parent,key) or key, depth+1, param_dict, result)
+		if find then
+			if depth == #path then
+				result[#result+1] = {path = parent and strjoin("/",parent,key) or key, value = value}
+			elseif type(value) == "table" then
+				for sub_key,sub_value in pairs(value) do
+					findpatterintable(sub_value, sub_key, path, parent and strjoin("/",parent,key) or key, depth+1, param_dict, result)
+				end
 			end
 		end
 	elseif strfind(tar, "{", 1, true) and strfind(tar, "}", -1, true) then 
 		tar = "^" .. strsub(tar, 2, -2) .. "$"
-		if string.gmatch(key,tar) and depth == #path then
-			result[#result+1] = {path = parent and strjoin("/",parent,key) or key, value = value}
-		elseif type(value) == "table" then
-			for sub_key,sub_value in pairs(value) do
-				findpatterintable(sub_value, sub_key, path, parent and strjoin("/",parent,key) or key, depth+1, param_dict, result)
+		if string.gmatch(key,tar) then
+			if depth == #path then
+				result[#result+1] = {path = parent and strjoin("/",parent,key) or key, value = value}
+			elseif type(value) == "table" then
+				for sub_key,sub_value in pairs(value) do
+					findpatterintable(sub_value, sub_key, path, parent and strjoin("/",parent,key) or key, depth+1, param_dict, result)
+				end
 			end
 		end
 	else
 		tar = Core.Rule:GetParseString(tar,param_dict)
 		--for k,v in pairs(param_dict) do tar = Core:StrReplace(tar, k, v) end  -- change param
-		if key == tar and depth == #path then
-			result[#result+1] = {path = parent and strjoin("/",parent,path[depth]) or path[depth], value = value}
-		elseif type(value) == "table" then
-			for sub_key,sub_value in pairs(value) do
-				findpatterintable(sub_value, sub_key, path, parent and strjoin("/",parent,key) or key, depth+1, param_dict, result)
+		if key == tar then
+			if depth == #path then
+				result[#result+1] = {path = parent and strjoin("/",parent,path[depth]) or path[depth], value = value}
+			elseif type(value) == "table" then
+				for sub_key,sub_value in pairs(value) do
+					findpatterintable(sub_value, sub_key, path, parent and strjoin("/",parent,key) or key, depth+1, param_dict, result)
+				end
 			end
 		end
 	end

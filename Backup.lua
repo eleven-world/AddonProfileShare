@@ -136,7 +136,7 @@ function mod:BackupProfiles(data, addon_name)
 	if db_names then
 		data[addon_name] = {}
 		for k,db_name in pairs(db_names) do
-			data[addon_name][db_name] = _G[db_name] and Core:DataToString(Core:deepCopy(_G[db_name]))
+			data[addon_name][db_name] = _G[db_name] and Core:Serialize(Core:deepCopy(_G[db_name]))
 		end
 	end
 	if #Core.process_quene == 1 then
@@ -170,7 +170,7 @@ end
 
 function mod:RestoreAddon(addon_name,addon_data)
 	for db_name,db_data_string in pairs(addon_data) do
-		_G[db_name] = Core:StringToData(db_data_string)
+		_G[db_name] = Core:Deserialize(db_data_string)
 	end
 	if #Core.process_quene == 1 then
 		Core:SetStatusText("正在重载界面...")

@@ -123,6 +123,27 @@ function mod:InitOptions()
 					},
 				},
 			},
+			ace_disable = {
+				type = "group",
+				name = "AceDB插件管理",
+				--inline = true,
+				order = 2,
+				args = {
+					desc = {
+						type = "description",
+						name = "选中的插件将启用AceDB导出规则（排序在自定义规则之后）",
+						order = 1,
+					},
+					list = {
+						type = "multiselect",
+						name = "",
+						values = function() return self:AceDBAddons_List() end,
+						get = function ( info, val1 ) return self:AceDBAddons_Get(val1) end,
+						set = function ( info, val1, val2 ) return self:AceDBAddons_Set(val1, val2) end,
+						order = 2,
+					},
+				},
+			},
 			default_addon_db = {
 				type = "group",
 				name = "内置信息库",
@@ -182,12 +203,12 @@ end
 
 function mod:AddonDBUpdate()
 	self:DefaultAddonDB_Load()
-	-- if not Core.db.global.default_addon_db then self:DefaultAddonDB_Reset() end
-	if not Core.db.profile.custom_addon_db then self:CustomAddonDB_Reset() end
-	if not Core.db.profile.blocked_addon then self:BlockedAddon_Reset() end
-	-- self.default_addon_db = Core.db.global.default_addon_db
+	if not Core.db.profile.custom_addon_db then Core.db.profile.custom_addon_db = {} end
+	if not Core.db.profile.blocked_addon then Core.db.profile.blocked_addon = {} end
+	if not Core.db.profile.ace_disable then Core.db.profile.ace_disable = {} end
 	self.custom_addon_db = Core.db.profile.custom_addon_db
 	self.blocked_addon = Core.db.profile.blocked_addon
+	self.ace_disable = Core.db.profile.ace_disable
 	self.addon_db = self:MergeAddonDB(Core:deepCopy(self.default_addon_db),self.custom_addon_db)
 	self.unknown_addon_string = self:UnknownAddonString()
 	self:CustomAddonDB_OptionUpdate()
@@ -432,7 +453,10 @@ function mod:IsAddonInstalled(addon_name)
 	return tContains(self.installed_addons, addon_name)
 end
 
-function mod:GetAceDB(addon_name)
+function mod:GetAceDB(addon_name, non_filter)
+	if not non_filter then
+		if self.ace_disable[addon_name] then return nil end
+	end
 	local db_registry = LibStub("AceDB-3.0").db_registry
 	local db_names = self.addon_db[addon_name]
 	if (not db_names) or (#db_names == 0) then return nil end
@@ -443,6 +467,37 @@ function mod:GetAceDB(addon_name)
 	end
 	return nil
 end
+
+function mod:AceDBAddons_List()
+	local acedb_addons = {}
+	if not self.installed_addons then self:GetInstalledAddons() end
+	for _,addon_name in pairs(self.installed_addons) do
+		if self:GetAceDB(addon_name, true) then
+			acedb_addons[#acedb_addons+1] = addon_name
+		end
+	end
+	self.acedb_addons = acedb_addons
+	return acedb_addons
+end
+
+function mod:AceDBAddons_Get(val1)
+	if not self.acedb_addons then self:AceDBAddons_List() end
+	local addon_name = self.acedb_addons[val1]
+	if addon_name then 
+		return not self.ace_disable[addon_name]
+	end
+end
+
+
+function mod:AceDBAddons_Set(val1, val2)
+	if not self.acedb_addons then self:AceDBAddons_List() end
+	local addon_name = self.acedb_addons[val1]
+	if addon_name then 
+		self.ace_disable[addon_name] = not val2
+	end
+end
+
+
 
 function mod:GetAddonCategory(addon_name)
 	--not_installed, not_loaded, unknown, non_config, blacklist, normal, acedb

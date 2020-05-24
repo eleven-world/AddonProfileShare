@@ -3,6 +3,8 @@ local Core = LibStub("AceAddon-3.0"):GetAddon("AddonProfileShare")
 local mod = {}
 Core.Instruction = mod
 
+local community_hidden = GetCurrentRegion() ~= 5
+
 local alert = [[|cFFFF0000插件仍处于早期开发测试阶段，请备份WTF文件后，谨慎使用！！！！！|r]]
 
 local export_steps = [[1. 输入档案名称和说明
@@ -119,6 +121,14 @@ function mod:InitOptions( ... )
 						name = alert,
 						order = 5,
 					},
+					join = {
+						type = "execute",
+						hidden = function () return community_hidden end,
+						name = "加入阳光插件社区",
+						desc = "加入社区，交流使用问题",
+						func = "JoinCommunity",
+						order = 6,
+					},
 				},
 			},
 			export_tab = {
@@ -161,5 +171,12 @@ function mod:InitOptions( ... )
 end
 
 
-
-
+function mod:JoinCommunity()
+	local club_link = GetClubTicketLink("eaa30RMfp05", "阳光插件", 0)
+	if club_link then
+		DEFAULT_CHAT_FRAME:AddMessage("社区链接已生成，请点击 "..club_link)
+		Core:SetStatusText("社区链接已贴至聊天窗口，请点击[加入：阳光插件]")
+	else
+		Core:SetStatusText("社区链接生成失败！")
+	end
+end

@@ -12,14 +12,21 @@ end
 
 
 function mod:LoadRule()
-	if not Core.db.global.default_rule_list then Core.db.global.default_rule_list = Core:deepCopy(Core.Default.default_rule_list) end
-	self.default_rule_list = Core.db.global.default_rule_list
+	self.default_rule_list = Core:deepCopy(Core.Default.default_rule_list)
+	self.default_rule_list_filtered = Core:deepCopy(Core.Default.default_rule_list)
+	if not Core.db.profile.default_rule_list_disabled then Core.db.profile.default_rule_list_disabled = {} end
+	self.default_rule_list_disabled = Core.db.profile.default_rule_list_disabled
+	for k,v in pairs(self.default_rule_list_disabled) do
+		if v then self.default_rule_list_filtered[k] = nil end
+	end
+	--if not Core.db.global.default_rule_list then Core.db.global.default_rule_list = Core:deepCopy(Core.Default.default_rule_list) end
+	--self.default_rule_list = Core.db.global.default_rule_list
 	if not Core.db.profile.custom_rule_list then Core.db.profile.custom_rule_list = {} end
 	self.custom_rule_list = Core.db.profile.custom_rule_list
 end
 
 function mod:MergeRule()
-	self.rule_list = Core:tableMerge(Core:deepCopy(self.default_rule_list),Core:deepCopy(self.custom_rule_list))
+	self.rule_list = Core:tableMerge(Core:deepCopy(self.default_rule_list_filtered),Core:deepCopy(self.custom_rule_list))
 end
 
 
@@ -87,6 +94,9 @@ function mod:InitOptionsCustom(path)
 						type = "description", width = "normal", order = 3,
 						name = function () return "   " .. math.modf( self.custom_show_index / self.rule_num_per_page ) + 1 .. " / " .. math.modf( #self.custom_rule_sorted_addon_names / self.rule_num_per_page ) + 1 .. " 页" end,
 					},
+					reset_button = {
+						type = "execute", name = "重置自定义规则", func = "ResetCustomRule", order = 4,
+					},
 				},
 			},
 		},
@@ -121,11 +131,23 @@ end
 
 
 function mod:ResetDefaultRule()
-	Core.db.global.default_rule_list = Core:deepCopy(Core.Default.default_rule_list)
-	self.default_rule_list = Core.db.global.default_rule_list
+	self.default_rule_list_filtered = Core:deepCopy(Core.Default.default_rule_list)
+	wipe(self.default_rule_list_disabled)
+	-- for k,v in pairs(Core.db.profile.default_rule_list_blocked) do
+	-- 	self.default_rule_list[k] = nil
+	-- end
+	-- Core.db.global.default_rule_list = Core:deepCopy(Core.Default.default_rule_list)
+	-- self.default_rule_list = Core.db.global.default_rule_list
 	self:MergeRule()
 	self.default_show_index = 1
 	self:InitOptionsDefault_RuleList()	
+end
+
+function mod:ResetCustomRule()
+	wipe(self.custom_rule_list)
+	self:MergeRule()
+	self.custom_show_index = 1
+	self:InitOptionsCustom_RuleList()	
 end
 
 
@@ -176,7 +198,7 @@ function mod:InitOptionsCustom_RuleList(path)
 				args = {
 					del = {
 						type = "execute", name = "删除", order = 1,
-						func = function () self:RemoveRule("custom", addon_name) end,
+						func = function () self:RemoveCustomRule(addon_name) end,
 					},
 					rule = {
 						type = "description", width = "full", order = 2,
@@ -212,8 +234,9 @@ function mod:InitOptionsDefault_RuleList(path)
 				type = "group", inline = true, name = addon_name, order = i,
 				args = {
 					del = {
-						type = "execute", name = "删除", order = 1,
-						func = function () self:RemoveRule("default", addon_name) end,
+						type = "execute", order = 1,
+						name = function () return self.default_rule_list_disabled[addon_name] and "已禁用" or "已启用" end,
+						func = function () self:DefaultRule_DisabledChange(addon_name) end,
 					},
 					rule = {
 						type = "description", width = "full", order = 2,
@@ -241,22 +264,34 @@ function mod:NewRule( addon_name, profile_name, profile_path, value_set, name_ru
 		profile_path = profile_path,
 		name_rule = name_rule,
 	}
+	self.new_custom_rule = {}
 	Core:SetStatusText("新增规则："..addon_name)
 	self:InitOptionsCustom_RuleList()
 end
 
 
-function mod:RemoveRule( list_type, addon_name )
-	if list_type == "custom" then
-		self.custom_rule_list[addon_name] = nil
-		self:MergeRule()
-		self:InitOptionsCustom_RuleList()
-	elseif  list_type == "default" then
-		self.default_rule_list[addon_name] = nil
-		self:MergeRule()
-		self:InitOptionsDefault_RuleList()
-	end
-	Core:SetStatusText("删除规则：".. list_type .. " : "..addon_name)
+function mod:DefaultRule_DisabledChange(addon_name)
+	self.default_rule_list_disabled[addon_name] = not self.default_rule_list_disabled[addon_name]
+	self:LoadRule()
+		-- self.default_rule_list[addon_name] = nil
+		-- self:MergeRule()
+		-- self:InitOptionsDefault_RuleList()
+	self:MergeRule()
+	self:InitOptionsDefault_RuleList()	
+	Core:SetStatusText("禁用默认规则：" .. addon_name)
+end
+
+function mod:RemoveCustomRule( list_type, addon_name )
+	-- if list_type == "custom" then
+	self.custom_rule_list[addon_name] = nil
+	self:MergeRule()
+	self:InitOptionsCustom_RuleList()
+	-- elseif  list_type == "default" then
+	-- 	self.default_rule_list[addon_name] = nil
+	-- 	self:MergeRule()
+	-- 	self:InitOptionsDefault_RuleList()
+	-- end
+	Core:SetStatusText("删除自定义规则："..addon_name)
 end
 
 function mod:GetRuleString( list_type, addon_name )	
