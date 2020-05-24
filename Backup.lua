@@ -4,15 +4,10 @@ local mod = {}
 Core.Backup = mod
 
 function mod:Init()
-	-- self.new_rule = {}
-	-- if not Core.settings.blacklist then Core.settings.blacklist = Core:deepCopy(self.default_blacklist) end
-	-- self.blacklist = Core.settings.blacklist
 	self:InitOptions()
-	if not Core.db.global.backup then 
-		Core.db.global.backup = {} 
-	end
+	if not Core.db.global.backup then Core.db.global.backup = {} end
 	self.backup = Core.db.global.backup 
-	-- self:RuleListUpdate()
+	self.backup_key = self.backup_key or 1
 end
 
 
@@ -61,7 +56,7 @@ function mod:InitOptions()
 				args = {
 					restore_header = {
 						type = "header",
-						name = "备份管理",
+						name = "还原插件配置",
 						order = 1,
 					},
 					restore_select = {
@@ -73,19 +68,49 @@ function mod:InitOptions()
 						width = "full",
 						order = 2,
 					},
+					select_all = {
+						type = "execute",
+						name = "全选",
+						width = "half",
+						func = "RestoreAddonList_SelectAll",
+						order = 3,
+					},
+					select_invert = {
+						type = "execute",
+						name = "反选",
+						width = "half",
+						func = "RestoreAddonList_SelectInvert",
+						order = 4,
+					},
 					restore_button = {
 						type = "execute",
-						name = "恢复到选择备份",
+						name = "恢复选择的插件",
 						confirm = function () return "确认|cFF00FF00恢复|r以下档案？\n"..self.backup_names[self.backup_key] end,
 						func = function() self:RestoreBackup(self.backup_key) end,
-						order = 3 ,
+						order = 5 ,
 					},
 					delete_button = {
 						type = "execute",
-						name = "删除选择备份",
+						name = "删除此备份",
 						confirm = function () return "确认|cFFFF0000删除|r以下档案？\n"..self.backup_names[self.backup_key] end,
 						func = function() self:DeleteBackup(self.backup_key) end,
-						order = 4 ,
+						order = 6 ,
+					},
+					addon_list = {
+						type = "multiselect",
+						name = "备份含有插件列表",
+						values = "RestoreAddonList_List",
+						get = function ( info, val ) return self:RestoreAddonList_Get(val) end,
+						set = function ( info, val1, val2 ) return self:RestoreAddonList_Set(val1, val2) end,
+						order = 7 ,
+					},
+					addon_list_unavailable = {
+						type = "multiselect",
+						name = "备份含有，但未载入的插件",
+						disabled = true,
+						values = "RestoreAddonList_ListUnavailable",
+						get = function () return false end,
+						order = 8 ,
 					},
 				},
 			},
@@ -98,37 +123,51 @@ end
 function mod:GetBackupNames()
 	local backup_names = {}
 	for i, v in pairs(self.backup) do
-		backup_names[i] = string.format("%s  [%s-%s] %s",v.name,v.player_name,v.player_server,v.create_time)
+		if v.is_auto_backup then
+			backup_names[i] = string.format("|cFFFF0000%s|r  [%s-%s] %s",v.name,v.player_name,v.player_server,v.create_time)
+		else
+			backup_names[i] = string.format("|cFF00FF00%s|r  [%s-%s] %s",v.name,v.player_name,v.player_server,v.create_time)
+		end
 	end
 	self.backup_names = backup_names
 	return backup_names
 end
 
 function mod:GetBackupKeys()
-	self.backup_key = self.backup_key or 1
 	return self.backup_key
 end
 
 function mod:SetBackupKey(info, val)
 	self.backup_key = val
+	self:RestoreAddonList_Update()
+	Core:RefreshDialog()
 end
 
+
 function mod:BackupAllProfiles(name)
+	local backup_addon_list = {}
+	for i = 1, GetNumAddOns() do
+		addon_name,_ = GetAddOnInfo(i)
+		if IsAddOnLoaded(i) and addon_name ~= Core.addon_name then
+			backup_addon_list[addon_name] = true
+		end
+	end
+	return self:BackupAddons(name, backup_addon_list, false)
+end
+
+
+function mod:BackupAddons(name, addon_list, is_auto_backup)
 	local backup = {}
-	backup.name = name or "未命名档案"
+	backup.is_auto_backup = is_auto_backup
+	backup.name = name or (is_auto_backup and "自动备份") or "未命名档案"
 	backup.create_time = date("%Y-%m-%d %H:%M:%S",GetServerTime())
 	backup.player_name = UnitName("player")
 	backup.player_server = GetRealmName()
 	local data = {}
-	local i
-	for i = 1, GetNumAddOns() do
-		addon_name,_ = GetAddOnInfo(i)
-		if IsAddOnLoaded(i) and addon_name ~= Core.addon_name then
-			Core:ProcessQuene_Add(0.2,self,"BackupProfiles", data, addon_name)
-		end
+	for addon_name,_ in pairs(addon_list) do
+		Core:ProcessQuene_Add(0.1,self,"BackupProfiles", data, addon_name)
 	end
-	Core:ProcessQuene_Add(0.2,self,"BackupStringGenerate", data, backup)
-	
+	Core:ProcessQuene_Add(0.1,self,"BackupStringGenerate", data, backup)
 end
 
 function mod:BackupProfiles(data, addon_name)
@@ -136,7 +175,8 @@ function mod:BackupProfiles(data, addon_name)
 	if db_names then
 		data[addon_name] = {}
 		for k,db_name in pairs(db_names) do
-			data[addon_name][db_name] = _G[db_name] and Core:Serialize(Core:deepCopy(_G[db_name]))
+			--data[addon_name][db_name] = _G[db_name] and Core:Serialize(Core:deepCopy(_G[db_name]))
+			data[addon_name][db_name] = _G[db_name] and Core:DataToString(Core:deepCopy(_G[db_name]))
 		end
 	end
 	if #Core.process_quene == 1 then
@@ -148,7 +188,8 @@ end
 
 function mod:BackupStringGenerate(data,backup)
 	if data then
-		backup.data_string = Core:DataToString(Core:deepCopy(data))
+		--backup.data_string = Core:DataToString(Core:deepCopy(data))
+		backup.data = Core:deepCopy(data)
 		self:AddBackup(backup)
 		Core:SetStatusText("备份完成")
 	end
@@ -156,21 +197,84 @@ end
 
 function mod:AddBackup(backup)
 	tinsert(self.backup, 1, backup)
+	self:RestoreAddonList_Update()
 	Core:RefreshDialog()
 end
 
+function mod:RestoreAddonList_Update()
+	local backup = self.backup[self.backup_key] 
+	if not (backup and backup.data) then 
+		self.restore_addon_list = {} 
+		self.restore_addon_list_unavailable = {} 
+		return nil 
+	end
+
+	local restore_addon_list = {}
+	local restore_addon_list_unavailable = {}
+	local data = backup.data
+	for addon_name,addon_data in pairs(data) do
+		if IsAddOnLoaded(addon_name) then
+			restore_addon_list[addon_name] = select(2,GetAddOnInfo(addon_name))
+		else
+			restore_addon_list_unavailable[addon_name] = addon_name
+		end
+	end
+	self.restore_addon_list = restore_addon_list
+	self.restore_addon_list_unavailable = restore_addon_list_unavailable
+end
+
+function mod:RestoreAddonList_List()
+	if not self.restore_addon_list then self:RestoreAddonList_Update() end
+	return self.restore_addon_list
+end
+
+function mod:RestoreAddonList_ListUnavailable()
+	if not self.restore_addon_list_unavailable then self:RestoreAddonList_Update() end
+	return self.restore_addon_list_unavailable
+end
+
+function mod:RestoreAddonList_Get(val)
+	if not self.restore_addon_list_not_choose then self.restore_addon_list_not_choose = {} end
+	return not self.restore_addon_list_not_choose[val]
+end
+
+function mod:RestoreAddonList_SelectAll()
+	if not self.restore_addon_list_not_choose then self.restore_addon_list_not_choose = {} else wipe(self.restore_addon_list_not_choose) end
+end
+
+function mod:RestoreAddonList_SelectInvert()
+	if not self.restore_addon_list_not_choose then self.restore_addon_list_not_choose = {} end
+	for addon_name, _ in pairs(self.restore_addon_list) do
+		self.restore_addon_list_not_choose[addon_name] = not self.restore_addon_list_not_choose[addon_name]
+	end
+end
+
+
+function mod:RestoreAddonList_Set(val1,val2)
+	if val2 then
+		self.restore_addon_list_not_choose[val1] = false
+	else
+		self.restore_addon_list_not_choose[val1] = true
+	end
+end
+
+
 
 function mod:RestoreBackup(backup_key)
-	local data = Core:StringToData(self.backup[backup_key].data_string)
+	--local data = Core:StringToData(self.backup[backup_key].data_string)
+	local data = self.backup[backup_key].data
 	for addon_name,addon_data in pairs(data) do
-		Core:ProcessQuene_Add(0.2,self,"RestoreAddon", addon_name, addon_data)
+		if not (self.restore_addon_list_not_choose[addon_name] or self.restore_addon_list_unavailable[addon_name]) then
+			Core:ProcessQuene_Add(0.1,self,"RestoreAddon", addon_name, addon_data)
+		end
 	end
-	Core:ProcessQuene_Add(0.2,self,"RestoreAddonComplete")
+	Core:ProcessQuene_Add(0.1,self,"RestoreAddonComplete")
 end
 
 function mod:RestoreAddon(addon_name,addon_data)
 	for db_name,db_data_string in pairs(addon_data) do
-		_G[db_name] = Core:Deserialize(db_data_string)
+		-- _G[db_name] = Core:Deserialize(db_data_string)
+		_G[db_name] = Core:StringToData(db_data_string)
 	end
 	if #Core.process_quene == 1 then
 		Core:SetStatusText("正在重载界面...")
@@ -178,6 +282,7 @@ function mod:RestoreAddon(addon_name,addon_data)
 		Core:SetStatusText("正在恢复插件，可能卡顿...剩余".. (#Core.process_quene - 1) .."  "..addon_name.." 完成!")
 	end
 end
+
 
 function mod:RestoreAddonComplete()
 	local frame = LibStub("AceConfigDialog-3.0").popup
@@ -196,4 +301,6 @@ end
 function mod:DeleteBackup(backup_key)
 	local v = tremove(self.backup,backup_key)
 	Core:SetStatusText(string.format("已删除备份：  %s  [%s-%s] %s",v.name,v.player_name,v.player_server,v.create_time))
+	self:RestoreAddonList_Update()
+	Core:RefreshDialog()
 end

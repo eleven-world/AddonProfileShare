@@ -7,6 +7,7 @@ local mod = {}
 Core.Import = mod
 
 function mod:Init()
+	self.auto_backup_status = true
 	self.options = {
 		type = "group",
 	    handler = self,
@@ -150,12 +151,21 @@ function mod:UpdateImportInfo(info_string,data)
 		}
 		option.args.change_name = {
 			type = "toggle",
-			name = "修改档案中的角色名称为你自己",
-			desc = "如果与档案建立者是处于同一帐号下，最好不要修改角色名称",
+			name = "修改角色名称",
+			desc = "修改档案中的角色名称为你自己，如果与档案建立者是处于同一帐号下，最好不要修改角色名称",
 			get = function () return self.change_name end,
 			set = function (info, val) self.change_name = val end,
-			width = 2,
+			width = 1,
 			order = 3,
+		}
+		option.args.backup = {
+			type = "toggle",
+			name = "自动备份",
+			desc = "导入插件前自动备份",
+			get = function () return self.auto_backup_status end,
+			set = function (info, val) self.auto_backup_status = val end,
+			width = 1,
+			order = 2,
 		}
 	end
 	mod.options.args.import_info = option
@@ -163,13 +173,28 @@ function mod:UpdateImportInfo(info_string,data)
 end
 
 function mod:ApplyImportProfile()
+	local import_addons = self:GetImportAddons()
+	if not import_addons then return nil end
+	if self.auto_backup_status then
+		Core.Backup:BackupAddons(nil,import_addons,true)
+	end
+	do
+		for addon_name,_ in pairs(import_addons) do
+			Core:ProcessQuene_Add(0.1,self,"ApplyProfile",addon_name,self.import.data[addon_name])
+		end
+		Core:ProcessQuene_Add(0.1,self,"ApplyProfileComplete")
+	end
+end
+
+function mod:GetImportAddons()
+	local import_addons = {}
 	if not (self.import_status and self.import_status.addon_list and self.import and self.import.data) then return nil end
 	for addon_name, chosen in pairs(self.import_status.addon_list) do
 		if chosen and IsAddOnLoaded(addon_name) then
-			Core:ProcessQuene_Add(0.1,self,"ApplyProfile",addon_name,self.import.data[addon_name])
+			import_addons[addon_name] = true
 		end
 	end
-	Core:ProcessQuene_Add(0.1,self,"ApplyProfileComplete")
+	return import_addons
 end
 
 

@@ -251,7 +251,7 @@ function Core:deepCopy(orig)
 	local function copy(obj, seen)
 		-- Handle non-tables and previously-seen tables.
 		if type(obj) ~= 'table' then 
-			if type(obj) == "function" or type(obj) == "userdata" then
+			if type(obj) == "function" or type(obj) == "userdata" or type(obj) == "thread" then
 				return nil
 			else
 				return obj
@@ -266,15 +266,13 @@ function Core:deepCopy(orig)
 		local res = {}
 		s[obj] = true
 		for k, v in pairs(obj) do 
-			res[k] = copy(v, s)
+			local new_k = copy(k, s)
+			if new_k then res[new_k] = copy(v, s) end
 		end
 		return res
 	end
 	return copy(orig)
 end
-
-
-
 
 
 function Core:tableMerge(t1, t2)
