@@ -204,7 +204,7 @@ end
 function mod:AddonDBUpdate()
 	self:DefaultAddonDB_Load()
 	if not Core.db.profile.custom_addon_db then Core.db.profile.custom_addon_db = {} end
-	if not Core.db.profile.blocked_addon then Core.db.profile.blocked_addon = {} end
+	if not Core.db.profile.blocked_addon then Core.db.profile.blocked_addon = Core:deepCopy(Core.Default.default_blocked_addon) end
 	if not Core.db.profile.ace_disable then Core.db.profile.ace_disable = {} end
 	self.custom_addon_db = Core.db.profile.custom_addon_db
 	self.blocked_addon = Core.db.profile.blocked_addon
@@ -535,4 +535,4 @@ function mod:GetCategoryDescName(category)
 	}
 	return desc_names[category]
 end
---/dump APS.AddonDB:IsAce("AddonProfileShare")
+

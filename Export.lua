@@ -1,4 +1,5 @@
 local Core = LibStub("AceAddon-3.0"):GetAddon("AddonProfileShare")
+local _,i,j,k,v
 
 local mod = {}
 Core.Export = mod
@@ -323,7 +324,7 @@ function mod:AddonLoadTrackerInit()
 	self.addon_load_tracker = addon_load_tracker
 end
 
---
+
 function mod:ExportAceProfile(addon_name)
 	local db = Core.AddonDB:GetAceDB(addon_name)
 	if not db then return nil end
@@ -365,8 +366,6 @@ function mod:ExportAceProfile(addon_name)
 end
 
 
---/dump APS.Export:ExportRuleProfile("D")
---/dump APS.Rule:GetRule("AddonProfileShare")
 function mod:ExportRuleProfile(addon_name)
 	local rule = Core.Rule:GetRule(addon_name)
 	if not rule then return nil end

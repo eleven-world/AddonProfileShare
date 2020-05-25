@@ -1,11 +1,12 @@
 local Core = LibStub("AceAddon-3.0"):GetAddon("AddonProfileShare")
+local _,i,j,k,v
 
 local mod = {}
 Core.Default = mod
 
 mod.default_addon_db_version = "20200519"
 mod.default_blocked_addon_version = "20200519"
-mod.default_rule_list_version = "20200519"
+mod.default_rule_list_version = "20200525"
 
 
 --黑名单，以下插件不导入导出任何内容

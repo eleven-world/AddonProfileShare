@@ -1,4 +1,5 @@
 local Core = LibStub("AceAddon-3.0"):GetAddon("AddonProfileShare")
+local _,i,j,k,v
 
 local mod = {}
 Core.Backup = mod

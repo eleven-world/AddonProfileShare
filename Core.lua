@@ -217,36 +217,6 @@ function Core:BulkPasteWindow(paste_mod,paste_target,close_callback,title,status
 end
 
 
-
--- function Core:deepCopy(orig)
--- 	local function copy3(obj, seen)
--- 		-- Handle non-tables and previously-seen tables.
--- 		if type(obj) ~= 'table' then 
--- 			if type(obj) == "function" or type(obj) == "userdata" then
--- 				return nil
--- 			else
--- 				return obj
--- 			end
--- 			--return obj
--- 		end
--- 		if seen and seen[obj] then 
--- 			return nil
--- 			--return seen[obj]
--- 		end
-
--- 		-- New table; mark it as seen an copy recursively.
--- 		local s = seen or {}
--- 		local res = {}
--- 		s[obj] = res
--- 		for k, v in next, obj do res[copy3(k, s)] = copy3(v, s) end
--- 		return setmetatable(res, getmetatable(obj))
--- 	end
--- 	return copy3(orig)
--- end
-
-
-
-
 function Core:deepCopy(orig)
 	local function copy(obj, seen)
 		-- Handle non-tables and previously-seen tables.
@@ -308,21 +278,3 @@ function Core:StrReplace(text, old, new)
 	return StrReplace(text, old, new)
 end
 
-
-
--- function Core:ShowTextWindow(text)
--- 	if not text then return end
--- 	local frame = AceGUI:Create("Frame")
--- 	frame:SetTitle("显示信息")
--- 	frame:SetWidth(600)
--- 	frame:SetHeight(200)
--- 	frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
--- 	frame:SetLayout("Flow")
-
--- 	--code from WeakAuras
--- 	local input = AceGUI:Create("EditBox");
--- 	input:SetRelativeWidth(1);
--- 	input:SetText(text);
--- 	input:SetFocus();
--- 	frame:AddChild(input);
--- end

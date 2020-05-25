@@ -1,4 +1,5 @@
 local Core = LibStub("AceAddon-3.0"):GetAddon("AddonProfileShare")
+local _,i,j,k,v
 
 local mod = {}
 Core.Rule = mod
@@ -19,8 +20,6 @@ function mod:LoadRule()
 	for k,v in pairs(self.default_rule_list_disabled) do
 		if v then self.default_rule_list_filtered[k] = nil end
 	end
-	--if not Core.db.global.default_rule_list then Core.db.global.default_rule_list = Core:deepCopy(Core.Default.default_rule_list) end
-	--self.default_rule_list = Core.db.global.default_rule_list
 	if not Core.db.profile.custom_rule_list then Core.db.profile.custom_rule_list = {} end
 	self.custom_rule_list = Core.db.profile.custom_rule_list
 end
@@ -145,11 +144,6 @@ end
 function mod:ResetDefaultRule()
 	self.default_rule_list_filtered = Core:deepCopy(Core.Default.default_rule_list)
 	wipe(self.default_rule_list_disabled)
-	-- for k,v in pairs(Core.db.profile.default_rule_list_blocked) do
-	-- 	self.default_rule_list[k] = nil
-	-- end
-	-- Core.db.global.default_rule_list = Core:deepCopy(Core.Default.default_rule_list)
-	-- self.default_rule_list = Core.db.global.default_rule_list
 	self:MergeRule()
 	self.default_show_index = 1
 	self:InitOptionsDefault_RuleList()	
@@ -312,15 +306,9 @@ function mod:DefaultRule_DisabledChange(addon_name, val)
 end
 
 function mod:RemoveCustomRule( list_type, addon_name )
-	-- if list_type == "custom" then
 	self.custom_rule_list[addon_name] = nil
 	self:MergeRule()
 	self:InitOptionsCustom_RuleList()
-	-- elseif  list_type == "default" then
-	-- 	self.default_rule_list[addon_name] = nil
-	-- 	self:MergeRule()
-	-- 	self:InitOptionsDefault_RuleList()
-	-- end
 	Core:SetStatusText("删除自定义规则："..addon_name)
 end
 
