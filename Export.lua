@@ -388,17 +388,28 @@ function mod:GetProfileFromRule(addon_name, rule)
 	local profile_name = rule.profile_name and self:ParseRule_GetProfileName(addon_name, db_names, param_dict, rule.profile_name) or nil
 	if profile_name then param_dict["$profile$"] = profile_name.value end
 	local profile = {}
-	for _, path_pattern in pairs(rule.profile_path) do
-		self:ParseRule_GetProfileFromPath(addon_name, db_names, param_dict, path_pattern, profile)
+	if rule.profile_path then
+		for _, path_pattern in pairs(rule.profile_path) do
+			self:ParseRule_GetProfileFromPath(addon_name, db_names, param_dict, path_pattern, profile)
+		end
 	end
 	local name_rule = rule.name_rule or nil
 	local value_set = rule.value_set or nil
+	local set_func = rule.set_func or nil
+
 	local result = {
 		profile_name = profile_name,
 		profile = profile,
 		name_rule = name_rule,
 		value_set = value_set,
+		set_func = set_func,
 	}
+
+	if rule.get_func then
+		local func_string = Core.Rule:GetParseString(rule.get_func,param_dict)
+		local get_func = loadstring(func_string)
+		get_func(result)
+	end
 	return result
 end
 

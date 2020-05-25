@@ -341,6 +341,7 @@ function mod:GetRuleString( list_type, addon_name )
 		for key,value in pairs(rule.value_set) do tinsert(value_set, key .. ":" .. (value or "nil")) end
 		rule_string = rule_string .. "[|cFF00FF00value_set|r]:" ..  strjoin(", ", unpack(value_set)) .. "\n" end 
 	if rule.name_rule then rule_string = rule_string .. "[|cFF00FF00name_rule|r]:" .. rule.name_rule  .. "\n" end 
+	if rule.set_func then rule_string = rule_string .. "[|cFF00FF00set_func|r]:" .. rule.set_func  .. "\n" end 
 	return rule_string
 end
 

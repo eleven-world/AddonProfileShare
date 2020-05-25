@@ -307,3 +307,22 @@ function Core:StrReplace(text, old, new)
 	end
 	return StrReplace(text, old, new)
 end
+
+
+
+-- function Core:ShowTextWindow(text)
+-- 	if not text then return end
+-- 	local frame = AceGUI:Create("Frame")
+-- 	frame:SetTitle("显示信息")
+-- 	frame:SetWidth(600)
+-- 	frame:SetHeight(200)
+-- 	frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
+-- 	frame:SetLayout("Flow")
+
+-- 	--code from WeakAuras
+-- 	local input = AceGUI:Create("EditBox");
+-- 	input:SetRelativeWidth(1);
+-- 	input:SetText(text);
+-- 	input:SetFocus();
+-- 	frame:AddChild(input);
+-- end

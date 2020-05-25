@@ -398,6 +398,14 @@ function mod:ApplyRuleProfile(addon_name,data)
 			self:ApplyRuleProfile_SetValue(key, param_dict, value)
 		end
 	end
+
+	--set func
+	if data.set_func then
+		local func_string = Core.Rule:GetParseString(data.set_func,param_dict)
+		local set_func = loadstring(func_string)
+		set_func(data)
+	end
+
 end
 
 local function SetValue(tbl, depth, path, value)

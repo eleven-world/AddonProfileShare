@@ -12,15 +12,6 @@ mod.default_rule_list_version = "20200519"
 mod.default_blocked_addon = {
 	"!BugGrabber",			--错误信息记录
 	"!Swatter",
-	"Auc-Advanced",			--插件报错，还没修好
-	"Auc-Filter-Basic",
-	"Auc-ScanData",
-	"Auc-Stat-Histogram",
-	"Auc-Stat-iLevel",
-	"Auc-Stat-Purchased",
-	"Auc-Stat-Simple",
-	"Auc-Stat-StdDev",
-	"Auc-Util-FixAH",
 	"Details_DeathGraphs",	--Detail子模块记录数据
 	"Details_EncounterDetails",
 	"Details_Vanguard",
@@ -48,6 +39,7 @@ mod.default_blocked_addon = {
 	"MogIt_Ranged",
 	"MogIt_TwoHanded",
 	"Overachiever_Cache",	--成就数据库缓存
+	"MeetingStone",			--集合石
 }
 
 --部分插件手写导出规则
@@ -58,22 +50,21 @@ mod.default_rule_list = {
 			"AddonProfileShare_DB/profiles/$profile$", -- [1]
 		},
 	},
-	["MeetingStone"] = {
-		profile_name = "MEETINGSTONE_CHARACTER_DB/profileKeys/$name$ - $server$",
-		profile_path = {
-			"MEETINGSTONE_CHARACTER_DB/profiles/$profile$", -- [1]
-		},
-		name_rule = "$name$ - $server$",
-	},
+	-- ["MeetingStone"] = {
+	-- 	profile_name = "MEETINGSTONE_CHARACTER_DB/profileKeys/$name$ - $server$",
+	-- 	profile_path = {
+	-- 		"MEETINGSTONE_CHARACTER_DB/profiles/$profile$", -- [1]
+	-- 	},
+	-- 	name_rule = "$name$ - $server$",
+	-- },
 	["Details"] = {
 		profile_name = "_detalhes_database/active_profile",
-		profile_path = {
-			"[_detalhes_global|_detalhes_database]/[^custom|cached_specs|cached_talents|combat_id|combat_counter|mythic_dungeon_currentsaved|nick_tag_cache|plugin_database|character_data|active_profile|SoloTablesSaved|RaidTablesSaved|savedStyles|benchmark_db|rank_window|last_realversion|last_version|__profiles|latest_news_saw|always_use_profile|always_use_profile_name|always_use_profile_exception|savedStyles|savedTimeCaptures|lastUpdateWarning|spell_school_cache|global_plugin_database|details_auras|item_level_pool|latest_report_table|boss_mods_timers|spell_pool|encounter_spell_pool|npcid_pool|createauraframe|mythic_plus|plugin_window_pos|switchSaved]", -- [1]
-			"_detalhes_global/__profiles/$profile$",
-		},
-		-- value_set = {
-		-- 	["_detalhes/default_player_data/active_profile"] = "$profile$",
+		-- profile_path = {
+		-- 	"[_detalhes_global|_detalhes_database]/[^custom|cached_specs|cached_talents|combat_id|combat_counter|mythic_dungeon_currentsaved|nick_tag_cache|plugin_database|character_data|active_profile|SoloTablesSaved|RaidTablesSaved|savedStyles|benchmark_db|rank_window|last_realversion|last_version|__profiles|latest_news_saw|always_use_profile|always_use_profile_name|always_use_profile_exception|savedStyles|savedTimeCaptures|lastUpdateWarning|spell_school_cache|global_plugin_database|details_auras|item_level_pool|latest_report_table|boss_mods_timers|spell_pool|encounter_spell_pool|npcid_pool|createauraframe|mythic_plus|plugin_window_pos|switchSaved]", -- [1]
+		-- 	"_detalhes_global/__profiles/$profile$",
 		-- },
+		get_func = [[local data = ... data.func_data = Details:ExportCurrentProfile()]],
+		set_func = [[local data = ... Details:ImportProfile(data.func_data, "APS")]],
 	},
 	["Details_Streamer"] = {
 		profile_name = "Details_StreamerDB/characters/$name$ - $server$",
