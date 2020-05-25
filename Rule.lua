@@ -37,6 +37,7 @@ function mod:InitOptions()
 	}
 	self:InitOptionsCustom(self.options.args)
 	self:InitOptionsDefault(self.options.args)
+	self:InitOptions_NewRule(self.options.args)
 	Core.options.args.config.args.rule_tab = self.options
 end
 
@@ -49,39 +50,6 @@ function mod:InitOptionsCustom(path)
 		name = "自定义规则",
 		order = 1,
 		args = {
-			new_rule = {
-				type = "group", name = "新建规则", order = 1, args = {
-					addon_name = {
-						type = "input", name = "插件名称", width = "full", order = 1,
-						get = function () return self.new_custom_rule.addon_name end,
-						set = function (info, val) self.new_custom_rule.addon_name = val end,
-					},
-					profile_name = {
-						type = "input", name = "档案名称路径", width = "full", order = 2,
-						get = function () return self.new_custom_rule.profile_name end,
-						set = function (info, val) self.new_custom_rule.profile_name = val end,
-					},
-					profile_path = {
-						type = "input", name = "档案路径", width = "full", order = 3, multiline = 3,
-						get = function () return self.new_custom_rule.profile_path end,
-						set = function (info, val) self.new_custom_rule.profile_path = val end,
-					},
-					value_set = {
-						type = "input", name = "变更键值", width = "full", order = 4, multiline = 3,
-						get = function () return self.new_custom_rule.value_set end,
-						set = function (info, val) self.new_custom_rule.value_set = val end,
-					},
-					name_rule = {
-						type = "input", name = "名称命名规则", width = "full", order = 5,
-						get = function () return self.new_custom_rule.name_rule end,
-						set = function (info, val) self.new_custom_rule.name_rule = val end,
-					},
-					new_button = {
-						type = "execute", name = "新建规则", width = "full", order = 6,
-						func = function () self:NewRule( self.new_custom_rule.addon_name, self.new_custom_rule.profile_name, self.new_custom_rule.profile_path, self.new_custom_rule.value_set, self.new_custom_rule.name_rule ) end,
-					},
-				},
-			},
 			rule_list = {
 				type = "group", name = "", order = 1, inline = true, args = {
 					pageup = {
@@ -96,6 +64,7 @@ function mod:InitOptionsCustom(path)
 					},
 					reset_button = {
 						type = "execute", name = "重置自定义规则", func = "ResetCustomRule", order = 4,
+						confirm = function() return "是否重置自定义规则" end,
 					},
 				},
 			},
@@ -105,10 +74,52 @@ function mod:InitOptionsCustom(path)
 	path.custom_tab = options
 end
 
+
+function mod:InitOptions_NewRule(path)
+	local options = {
+		type = "group", name = "新建规则", order = 2, args = {
+			addon_name = {
+				type = "input", name = "插件名称", width = "full", order = 1,
+				get = function () return self.new_custom_rule.addon_name end,
+				set = function (info, val) self.new_custom_rule.addon_name = val end,
+			},
+			profile_name = {
+				type = "input", name = "档案名称路径", width = "full", order = 2,
+				get = function () return self.new_custom_rule.profile_name end,
+				set = function (info, val) self.new_custom_rule.profile_name = val end,
+			},
+			profile_path = {
+				type = "input", name = "档案路径", width = "full", order = 3, multiline = 3,
+				get = function () return self.new_custom_rule.profile_path end,
+				set = function (info, val) self.new_custom_rule.profile_path = val end,
+			},
+			value_set = {
+				type = "input", name = "变更键值", width = "full", order = 4, multiline = 3,
+				get = function () return self.new_custom_rule.value_set end,
+				set = function (info, val) self.new_custom_rule.value_set = val end,
+			},
+			name_rule = {
+				type = "input", name = "名称命名规则", width = "full", order = 5,
+				get = function () return self.new_custom_rule.name_rule end,
+				set = function (info, val) self.new_custom_rule.name_rule = val end,
+			},
+			new_button = {
+				type = "execute", name = "新建规则", width = "full", order = 6,
+				func = function () self:NewRule( self.new_custom_rule.addon_name, self.new_custom_rule.profile_name, self.new_custom_rule.profile_path, self.new_custom_rule.value_set, self.new_custom_rule.name_rule ) end,
+			},
+		},
+	}
+	path.new_rule = options
+end
+
+
+
+
+
 function mod:InitOptionsDefault(path)
 	self.default_show_index = self.default_show_index or 1
 	local options = {
-		type = "group", handler = self, name = "内置规则", order = 2,
+		type = "group", handler = self, name = "内置规则", order = 3,
 		args = {
 			pageup = {
 				type = "execute", name = "<<", func = "DefaultPrevPage", width = "half", order = 1,
@@ -122,6 +133,7 @@ function mod:InitOptionsDefault(path)
 			},
 			reset_button = {
 				type = "execute", name = "重置内置规则", func = "ResetDefaultRule", order = 4,
+				confirm = function() return "是否重置内置规则" end,
 			},
 		},
 	}
@@ -194,14 +206,19 @@ function mod:InitOptionsCustom_RuleList(path)
 		local addon_name = self.custom_rule_sorted_addon_names[i]
 		if addon_name then
 			local option = {
-				type = "group", inline = true, name = addon_name, order = i,
+				type = "group", inline = true, name = "", order = i,
 				args = {
 					del = {
-						type = "execute", name = "删除", order = 1,
+						type = "execute", name = "删除", width = "half", order = 1,
+						confirm = function() return "是否删除规则？\n"..addon_name end,
 						func = function () self:RemoveCustomRule(addon_name) end,
 					},
+					name = {
+						type = "description", order = 2, width = "normal", 
+						name = "|cffffd100"..addon_name.."|r",
+					},
 					rule = {
-						type = "description", width = "full", order = 2,
+						type = "description", width = "full", order = 3,
 						name = function ()  return self:GetRuleString("custom", addon_name) end, 
 					},
 				},
@@ -209,6 +226,7 @@ function mod:InitOptionsCustom_RuleList(path)
 			options.args[addon_name] = option
 		end
 	end	
+	if not Core.loading then Core.Export:AddonListRefresh() end
 	Core:RefreshDialog()
 end
 
@@ -231,15 +249,20 @@ function mod:InitOptionsDefault_RuleList(path)
 		local addon_name = self.default_rule_sorted_addon_names[i]
 		if addon_name then
 			local option = {
-				type = "group", inline = true, name = addon_name, order = i,
+				type = "group", inline = true, name = "", order = i,
 				args = {
 					del = {
-						type = "execute", order = 1,
-						name = function () return self.default_rule_list_disabled[addon_name] and "已禁用" or "已启用" end,
-						func = function () self:DefaultRule_DisabledChange(addon_name) end,
+						type = "toggle", order = 1, width = "half", 
+						name = function () return self.default_rule_list_disabled[addon_name] and "|cFFFF0000已禁用|r" or "|cFF00FF00已启用|r" end,
+						get = function () return not self.default_rule_list_disabled[addon_name] end,
+						set = function (info, val) self:DefaultRule_DisabledChange(addon_name, val) end,
+					},
+					name = {
+						type = "description", order = 2, width = "normal", 
+						name = "|cffffd100"..addon_name.."|r",
 					},
 					rule = {
-						type = "description", width = "full", order = 2,
+						type = "description", width = "full", order = 3,
 						name = function () return self:GetRuleString("default", addon_name) end, 
 					},
 				},
@@ -247,22 +270,28 @@ function mod:InitOptionsDefault_RuleList(path)
 			options.args[addon_name] = option
 		end
 	end	
+	if not Core.loading then Core.Export:AddonListRefresh() end
 	Core:RefreshDialog()
 end
 
-function mod:NewRule( addon_name, profile_name, profile_path, value_set, name_rule )
+function mod:NewRule( addon_name, profile_name, profile_path, value_set_string, name_rule )
 	if not (addon_name and profile_path) then return nil end
 	profile_path = {strsplit("\n",profile_path)}
-	if value_set then
-		for _, pair_string in pairs({strsplit("\n",value_set)}) do
+
+	local value_set
+	if value_set_string then
+		value_set = {}
+		for _, pair_string in pairs({strsplit("\n",value_set_string)}) do
 			local k,v = strsplit(":",pair_string) 
 			value_set[k] = v
 		end
 	end
+
 	self.custom_rule_list[addon_name] = {
 		profile_name = profile_name,
 		profile_path = profile_path,
 		name_rule = name_rule,
+		value_set = value_set,
 	}
 	self.new_custom_rule = {}
 	Core:SetStatusText("新增规则："..addon_name)
@@ -270,15 +299,16 @@ function mod:NewRule( addon_name, profile_name, profile_path, value_set, name_ru
 end
 
 
-function mod:DefaultRule_DisabledChange(addon_name)
-	self.default_rule_list_disabled[addon_name] = not self.default_rule_list_disabled[addon_name]
+function mod:DefaultRule_DisabledChange(addon_name, val)
+	self.default_rule_list_disabled[addon_name] = not val
 	self:LoadRule()
-		-- self.default_rule_list[addon_name] = nil
-		-- self:MergeRule()
-		-- self:InitOptionsDefault_RuleList()
 	self:MergeRule()
 	self:InitOptionsDefault_RuleList()	
-	Core:SetStatusText("禁用默认规则：" .. addon_name)
+	if val then
+		Core:SetStatusText("启用默认规则：" .. addon_name)
+	else
+		Core:SetStatusText("禁用默认规则：" .. addon_name)
+	end
 end
 
 function mod:RemoveCustomRule( list_type, addon_name )

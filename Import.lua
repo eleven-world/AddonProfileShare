@@ -60,22 +60,10 @@ function mod:ImportString_Analyse()
 	end
 	status_text = status_text or info_string
 	Core:SetStatusText(status_text)
-	self:UpdateImportInfo(info_string,data)
+	self:ImportString_AnalyseData(info_string,data)
 end
 
-function mod:ImportString_SelectAll()
-	for k,v in pairs(self.import_status.addon_list) do
-		self.import_status.addon_list[k] = true
-	end
-end
-
-function mod:ImportString_SelectInvert()
-	for k,v in pairs(self.import_status.addon_list) do
-		self.import_status.addon_list[k] = not v
-	end
-end
-
-function mod:UpdateImportInfo(info_string,data)
+function mod:ImportString_AnalyseData(info_string,data)
 	local option = {
 		type = "group",
 		--name = "字符串信息",
@@ -87,89 +75,138 @@ function mod:UpdateImportInfo(info_string,data)
 				name = info_string,
 				order = 1,
 			},
+			data = {
+				type = "group",
+				name = "",
+				inline = true,
+				order = 2,
+				args = {},
+			},
 		},
 	}
 
 	if data then
-		self.import_status = {}
-		self.import_status.addon_list = {}
-		self.import_status.unavailable_addon_list = {}
-
-		self.change_name = true
-		local import_player_name = self.import.player_name .. " - " .. self.import.player_server
-		for k,_ in pairs(Core.db.sv.profileKeys) do
-			if k == import_player_name then self.change_name = false end
-		end
-
-		local addon_list = {}
-		local unavailable_addon_list = {}
-		for k,v in pairs(data) do 
-			if IsAddOnLoaded(k) and not Core.AddonDB:IsBlockedAddon(k) then
-				addon_list[k] = select(2,GetAddOnInfo(k))
-				self.import_status.addon_list[k] = true
-			else
-				unavailable_addon_list[k] = k 
-				self.import_status.unavailable_addon_list[k] = false
-			end
-		end
-		option.args.data = {
-			type = "multiselect",
-			name = "选择导入插件",
-			values = addon_list,
-			set = function ( info, val, val2 ) self.import_status.addon_list[val] = val2 end,
-			get = function ( info, val ) return self.import_status.addon_list[val] end,
-			order = 3,
-		}
-		option.args.unavailable_data = {
-			type = "multiselect",
-			name = "不可用插件",
-			values = unavailable_addon_list,
-			disabled = true,
-			get = function ( info, val ) return self.import_status.unavailable_addon_list[val] end,
-			order = 4,
-		}
-		option.args.select_all = {
-			type = "execute",
-			name = "全选",
-			width = "half",
-			func = function () self:ImportString_SelectAll() end,
-			order = 2,
-		}
-		option.args.select_invert = {
-			type = "execute",
-			name = "反选",
-			width = "half",
-			func = function () self:ImportString_SelectInvert() end,
-			order = 2,
-		}
-		option.args.import = {
-			type = "execute",
-			name = "导入所选插件",
-			confirm = function () return "确认导入设置，并立即重载界面？\n过程中可能会卡顿一会" end,
-			func = function () self:ApplyImportProfile() end,
-			order = 2,
-		}
-		option.args.change_name = {
-			type = "toggle",
-			name = "修改角色名称",
-			desc = "修改档案中的角色名称为你自己，如果与档案建立者是处于同一帐号下，最好不要修改角色名称",
-			get = function () return self.change_name end,
-			set = function (info, val) self.change_name = val end,
-			width = 1,
-			order = 3,
-		}
-		option.args.backup = {
-			type = "toggle",
-			name = "自动备份",
-			desc = "导入插件前自动备份",
-			get = function () return self.auto_backup_status end,
-			set = function (info, val) self.auto_backup_status = val end,
-			width = 1,
-			order = 2,
-		}
+		self.change_name = not self:ImportString_IsFromPlayer()
+		self:ImportString_GetAddonList(data)
+		option.args.data.args = self:ImportString_OptionsAddonList()
 	end
 	mod.options.args.import_info = option
 	Core:RefreshDialog()
+end
+
+function mod:ImportString_IsFromPlayer()
+	local import_player_name = self.import.player_name .. " - " .. self.import.player_server
+	for k,_ in pairs(Core.db.sv.profileKeys) do
+		if k == import_player_name then return true end
+	end
+	return false
+end
+
+function mod:ImportString_GetAddonList(data)
+	local addon_list = {}
+	addon_list.available_toggle = {}
+	addon_list.available_names = {}
+	addon_list.unavailable_names = {}
+	for k,v in pairs(data) do 
+		if IsAddOnLoaded(k) and not Core.AddonDB:IsBlockedAddon(k) then
+			addon_list.available_names[k] = select(2,GetAddOnInfo(k))
+			addon_list.available_toggle[k] = true
+		else
+			addon_list.unavailable_names[k] = k 
+		end
+	end
+	self.addon_list = addon_list
+end
+
+
+
+function mod:ImportString_OptionsAddonList()
+	local options = {
+		buttons = {
+			type = "group",
+			inline = true,
+			names = "",
+			order = 1,
+			args = {
+				select_all = {
+					type = "execute",
+					name = "全选",
+					width = "half",
+					func = "ImportString_SelectAll",
+					order = 1,
+				},
+				select_invert = {
+					type = "execute",
+					name = "反选",
+					width = "half",
+					func = "ImportString_SelectInvert",
+					order = 2,
+				},
+				import = {
+					type = "execute",
+					name = "导入所选插件",
+					confirm = function () return "确认导入设置，并立即重载界面？\n过程中可能会卡顿一会" end,
+					func = "ApplyImportProfile",
+					order = 3,
+				},
+				change_name = {
+					type = "toggle",
+					name = "修改角色名称",
+					desc = "修改档案中的角色名称为你自己，如果与档案建立者是处于同一帐号下，最好不要修改角色名称",
+					get = function () return self.change_name end,
+					set = function (info, val) self.change_name = val end,
+					width = 1,
+					order = 4,
+				},
+				backup = {
+					type = "toggle",
+					name = "自动备份",
+					desc = "导入插件前自动备份",
+					get = function () return self.auto_backup_status end,
+					set = function (info, val) self.auto_backup_status = val end,
+					width = 1,
+					order = 2,
+				},
+			},
+		},
+		list = {
+			type = "group",
+			inline = true,
+			names = "",
+			order = 2,
+			args = {
+				available = {
+					type = "multiselect",
+					name = "选择导入插件",
+					values = self.addon_list.available_names,
+					set = function ( info, val, val2 ) self.addon_list.available_toggle[val] = val2 end,
+					get = function ( info, val ) return self.addon_list.available_toggle[val] end,
+					order = 1,
+				},
+				unavailable = {
+					type = "multiselect",
+					name = "不可用插件（未加载或已屏蔽）",
+					values = self.addon_list.unavailable_names,
+					disabled = true,
+					get = function ( info, val ) return false end,
+					order = 2,
+				},
+			},
+		},
+	}
+	return options
+end
+
+function mod:ImportString_SelectAll()
+	for k,v in pairs(self.addon_list.available_toggle) do
+		self.addon_list.available_toggle[k] = true
+	end
+end
+
+function mod:ImportString_SelectInvert()
+	for k,v in pairs(self.addon_list.available_toggle) do
+		self.addon_list.available_toggle[k] = not v
+	end
 end
 
 function mod:ApplyImportProfile()
@@ -188,8 +225,8 @@ end
 
 function mod:GetImportAddons()
 	local import_addons = {}
-	if not (self.import_status and self.import_status.addon_list and self.import and self.import.data) then return nil end
-	for addon_name, chosen in pairs(self.import_status.addon_list) do
+	if not (self.addon_list and self.addon_list.available_toggle and self.import and self.import.data) then return nil end
+	for addon_name, chosen in pairs(self.addon_list.available_toggle) do
 		if chosen and IsAddOnLoaded(addon_name) then
 			import_addons[addon_name] = true
 		end

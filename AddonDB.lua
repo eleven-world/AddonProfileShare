@@ -29,7 +29,7 @@ function mod:InitOptions()
 			custom_addon_db = {
 				type = "group",
 				name = "自定义信息库",
-				order = 2,
+				order = 3,
 				args = {
 					unknown = {
 						type = "group",
@@ -127,7 +127,7 @@ function mod:InitOptions()
 				type = "group",
 				name = "AceDB插件管理",
 				--inline = true,
-				order = 2,
+				order = 1,
 				args = {
 					desc = {
 						type = "description",
@@ -494,7 +494,8 @@ function mod:AceDBAddons_Set(val1, val2)
 	local addon_name = self.acedb_addons[val1]
 	if addon_name then 
 		self.ace_disable[addon_name] = not val2
-	end
+	end	
+	if not Core.loading then Core.Export:AddonListRefresh() end
 end
 
 
