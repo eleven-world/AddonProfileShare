@@ -323,7 +323,7 @@ function mod:ApplyAceProfile(addon_name,import_db)
 
 	local except = {"namespaces","profiles","profileKeys","char","profile","profile_name"}
 
-	local profile_name = "APS_Import"
+	local profile_name = "APS"
 	if not db.profiles then db.profiles = {} end
 	db.profiles[profile_name] = import_db.profile
 	if import_db.char then
@@ -376,7 +376,7 @@ function mod:ApplyRuleProfile(addon_name,data)
 	if data.name_rule then 
 		profile_name = Core.Rule:GetParseString(data.name_rule,param_dict)
 	else
-		profile_name = "APS_Import"
+		profile_name = "APS"
 	end
 	param_dict["$profile$"] = profile_name
 

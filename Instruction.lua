@@ -68,8 +68,10 @@ local rule_instruction = [[规则说明：
 格式示例：AddonProfileShare_DB/profileKeys/$name$ - $server$:$profile$
 :前为路径，后为要变更为的值
 |cffffd100名称命名规则：|r
-只在导入时有用，导入时为该插件建立的设定档名称，默认APS_Import
+只在导入时有用，导入时为该插件建立的设定档名称，默认APS
 某些插件不能自定义设定档名称，则需将其命名规则填入此处，支持变量替换
+|cffffd100自定义代码：|r
+支持自定义代码导入导出，get_func和set_func，请自行研究，示例规则Details，且不提供图形输入接口
 ]]
 
 

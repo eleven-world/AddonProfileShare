@@ -5,7 +5,7 @@ local mod = {}
 Core.Default = mod
 
 mod.default_addon_db_version = "20200519"
-mod.default_blocked_addon_version = "20200519"
+mod.default_blocked_addon_version = "20200525"
 mod.default_rule_list_version = "20200525"
 
 
@@ -59,7 +59,7 @@ mod.default_rule_list = {
 	-- 	name_rule = "$name$ - $server$",
 	-- },
 	["Details"] = {
-		profile_name = "_detalhes_database/active_profile",
+		-- profile_name = "_detalhes_database/active_profile",
 		-- profile_path = {
 		-- 	"[_detalhes_global|_detalhes_database]/[^custom|cached_specs|cached_talents|combat_id|combat_counter|mythic_dungeon_currentsaved|nick_tag_cache|plugin_database|character_data|active_profile|SoloTablesSaved|RaidTablesSaved|savedStyles|benchmark_db|rank_window|last_realversion|last_version|__profiles|latest_news_saw|always_use_profile|always_use_profile_name|always_use_profile_exception|savedStyles|savedTimeCaptures|lastUpdateWarning|spell_school_cache|global_plugin_database|details_auras|item_level_pool|latest_report_table|boss_mods_timers|spell_pool|encounter_spell_pool|npcid_pool|createauraframe|mythic_plus|plugin_window_pos|switchSaved]", -- [1]
 		-- 	"_detalhes_global/__profiles/$profile$",
